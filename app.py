@@ -1,26 +1,34 @@
 from flask import Flask, render_template, request
 import numpy as np
 import joblib
-from tensorflow.keras.models import load_model
 from keras.models import load_model
 import keras.losses
 
 app = Flask(__name__)
 
 # Load trained house price model
-model = load_model(
-    "model.h5",
-    custom_objects={
-        "mse": keras.losses.MeanSquaredError(),
-        "mean_squared_error": keras.losses.MeanSquaredError(),
-        "mae": keras.losses.MeanAbsoluteError(),
-    },
-    safe_mode=False
-)
+try:
+    model = load_model(
+        "model.h5",
+        custom_objects={
+            "mse": keras.losses.MeanSquaredError(),
+            "mean_squared_error": keras.losses.MeanSquaredError(),
+            "mae": keras.losses.MeanAbsoluteError(),
+        },
+        safe_mode=False
+    )
+    model.compile(optimizer='adam', loss='mse')
+    print("✅ Model loaded and recompiled successfully!")
+except Exception as e:
+    print(f"❌ Error loading model: {e}")
 
 # Load scaler used during training
-scaler = joblib.load("scaler.pkl")
-model= load_model("model.h5")
+try:
+    scaler = joblib.load("scaler.pkl")
+    print("✅ Scaler loaded successfully!")
+except Exception as e:
+    print(f"❌ Error loading scaler: {e}")
+
 # Feature names
 feature_labels = [
     "Overall Quality (1-10)",
@@ -40,11 +48,7 @@ def home():
 def predict():
     try:
         # Extract features from form
-        features = []
-        for label in feature_labels:
-            value = float(request.form[label])
-            features.append(value)
-
+        features = [float(request.form[label]) for label in feature_labels]
         features = np.array(features).reshape(1, -1)
 
         # Scale features
@@ -52,8 +56,6 @@ def predict():
 
         # Predict house price
         prediction = model.predict(features)[0][0]
-
-        # Format prediction as currency
         result = f"${prediction:,.2f}"
 
         return render_template(
@@ -66,7 +68,7 @@ def predict():
         return render_template(
             'index.html',
             feature_labels=feature_labels,
-            prediction_text="Error in prediction. Please check your input values."
+            prediction_text=f"Error: {str(e)}"
         )
 
 if __name__ == "__main__":
