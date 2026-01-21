@@ -20,7 +20,7 @@ model = load_model(
 
 # Load scaler used during training
 scaler = joblib.load("scaler.pkl")
-
+model= load_model("model.h5")
 # Feature names
 feature_labels = [
     "Overall Quality (1-10)",
