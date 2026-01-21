@@ -3,11 +3,20 @@ import numpy as np
 import joblib
 from tensorflow.keras.models import load_model
 from keras.models import load_model
+import keras.losses
 
 app = Flask(__name__)
 
 # Load trained house price model
-model = load_model("model.h5", safe_mode=False)
+model = load_model(
+    "model.h5",
+    custom_objects={
+        "mse": keras.losses.MeanSquaredError(),
+        "mean_squared_error": keras.losses.MeanSquaredError(),
+        "mae": keras.losses.MeanAbsoluteError(),
+    },
+    safe_mode=False
+)
 
 # Load scaler used during training
 scaler = joblib.load("scaler.pkl")
